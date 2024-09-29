@@ -1,101 +1,107 @@
-import Image from "next/image";
+"use client";
+
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {Textarea} from "@/components/ui/textarea";
+import {useContact} from "@/hooks/use-contact";
+import {useForm, FormProvider} from "react-hook-form";
+import {FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {z} from "zod";
+import {ContactSchema} from "@/schemas";
+import {useToast} from "@/hooks/use-toast";
+import Link from "next/link";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const {addContact} = useContact();
+    const {toast} = useToast();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    const formMethods = useForm<z.infer<typeof ContactSchema>>({
+        resolver: zodResolver(ContactSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+            message: ""
+        },
+    });
+
+    const {handleSubmit, control, reset} = formMethods;
+
+    async function onSubmit(values: z.infer<typeof ContactSchema>) {
+        await addContact(values);
+        reset();
+
+        toast({
+            title: "성공",
+            description: "문의 내용을 제출하였습니다.",
+        });
+    }
+
+    return (
+        <main>
+            <Button asChild className="absolute right-4 top-4 font-bold">
+                <Link href="/contacts">
+                    문의 목록
+                </Link>
+            </Button>
+            <FormProvider {...formMethods}>
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col items-center justify-center h-screen">
+                    <Card className="w-full max-w-[540px]">
+                        <CardHeader>
+                            <CardTitle className="text-2xl">문의하기</CardTitle>
+                            <CardDescription>문의 내용을 입력 후, 제출 버튼을 눌러주세요.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <FormField
+                                control={control}
+                                name="name"
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input type="text" placeholder="이름" {...field} />
+                                        </FormControl>
+                                        <FormMessage/>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={control}
+                                name="email"
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input type="email" placeholder="이메일" {...field} />
+                                        </FormControl>
+                                        <FormMessage/>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={control}
+                                name="message"
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder="문의 내용을 입력해 주세요."
+                                                className="resize-none h-48"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage/>
+                                    </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="submit" className="w-full">
+                                제출하기
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </form>
+            </FormProvider>
+        </main>
+    );
 }
